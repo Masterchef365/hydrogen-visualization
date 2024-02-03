@@ -2,6 +2,8 @@
 //#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use egui::{Color32, Stroke};
+use ndarray::Array3;
+use threegui::Vec3;
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
@@ -70,11 +72,6 @@ impl Default for TemplateApp {
 impl TemplateApp {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        // This is also where you can customize the look and feel of egui using
-        // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
-
-        // Load previous app state (if any).
-        // Note that you must enable the `persistence` feature for this to work.
         if let Some(storage) = cc.storage {
             return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         }
@@ -104,23 +101,44 @@ impl eframe::App for TemplateApp {
                     .with_desired_size(ui.available_size())
                     .show(ui, |th| {
                         let paint = th.painter();
-                        threegui::utils::grid(paint, 10, 1.0, Stroke::new(1., Color32::GRAY))
+
+                        threegui::utils::grid(paint, 10, 1.0, Stroke::new(1., Color32::DARK_GRAY));
+
+                        let w = 30;
+                        let arr = Array3::zeros((w, w, w));
+                        draw_array3d_as_points(paint, 1.0, 1.0, &arr);
+
                     });
             });
         });
     }
 }
 
-fn powered_by_egui_and_eframe(ui: &mut egui::Ui) {
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 0.0;
-        ui.label("Powered by ");
-        ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-        ui.label(" and ");
-        ui.hyperlink_to(
-            "eframe",
-            "https://github.com/emilk/egui/tree/master/crates/eframe",
-        );
-        ui.label(".");
-    });
+fn draw_array3d_as_points(paint: &threegui::Painter3D, scale: f32, radius: f32, arr: &Array3<f32>) {
+    let origin_3d = Vec3::from_array(
+        arr.shape()
+            .iter()
+            .map(|w| *w as f32)
+            .collect::<Vec<f32>>()
+            .try_into()
+            .unwrap(),
+    ) / 2.0;
+
+    let min_dim = *arr.shape().iter().min().unwrap() as f32;
+
+    let scale_factor = scale / min_dim;
+
+    for x in 0..arr.shape()[0] {
+        for y in 0..arr.shape()[1] {
+            for z in 0..arr.shape()[2] {
+                let pt = Vec3::new(x as f32, y as f32, z as f32);
+                let mut vect = pt - origin_3d;
+                vect *= scale_factor;
+
+                let color = Color32::WHITE;
+
+                paint.circle_filled(vect, radius, color);
+            }
+        }
+    }
 }
