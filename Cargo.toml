@@ -3,7 +3,7 @@ name = "eframe_template"
 version = "0.1.0"
 authors = ["Emil Ernerfeldt <emil.ernerfeldt@gmail.com>"]
 edition = "2021"
-rust-version = "1.72"
+#rust-version = "1.72"
 
 
 [dependencies]
@@ -18,6 +18,8 @@ log = "0.4"
 
 # You only need serde if you want app persistence:
 serde = { version = "1", features = ["derive"] }
+threegui = { git = "https://github.com/Masterchef365/threegui.git" }
+ndarray = "0.15.6"
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
